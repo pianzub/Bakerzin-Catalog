@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog Inventaris Bakerzin</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Export Libs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- URL backend Google Apps Script untuk versi GitHub Pages -->
+    <script src="./config.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: { 900: '#18212d', 950: '#101822' },
+                        amber: { 400: '#38a9d0', 500: '#2596BE', 600: '#1d789a' },
+                        orange: { 500: '#1d789a' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.4); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.8); }
+
+        @keyframes float {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .blob { animation: float 15s infinite ease-in-out; will-change: transform; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+
+        .swal2-popup.glass-swal {
+            background: rgba(255, 255, 255, 0.95) !important; backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important; border-radius: 2rem !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important; color: #1e293b !important;
+        }
+        html.dark .swal2-popup.glass-swal {
+            background: rgba(15, 23, 42, 0.95) !important; border: 1px solid rgba(51, 65, 85, 0.5) !important;
+            color: #f1f5f9 !important;
+        }
+
+        /* Lightweight command-center theme — aligned with COGS & SLNC */
+        :root {
+            color-scheme: light;
+            --canvas: #f4f7f9;
+            --surface: #ffffff;
+            --surface-soft: #f8fafc;
+            --ink: #18212d;
+            --muted: #657386;
+            --line: #dfe7ec;
+            --primary: #2596BE;
+            --primary-dark: #1d789a;
+            --danger: #c3002f;
+            --shadow-sm: 0 2px 8px rgba(24, 33, 45, .05);
+            --shadow-md: 0 10px 28px rgba(24, 33, 45, .08);
+        }
+
+        html, body { background: var(--canvas) !important; color: var(--ink) !important; }
+        body { font-family: Inter, sans-serif; }
+        #ambientBackground { display: none !important; }
+
+        #appNav { top: 0 !important; padding: 0 !important; }
+        #appNavShell {
+            max-width: none !important;
+            min-height: 72px;
+            padding: 0 28px !important;
+            border: 0 !important;
+            border-bottom: 1px solid var(--line) !important;
+            border-radius: 0 !important;
+            background: rgba(255,255,255,.96) !important;
+            box-shadow: 0 3px 14px rgba(24,33,45,.05) !important;
+            backdrop-filter: none !important;
+        }
+        #brandIcon { background: var(--primary) !important; box-shadow: none !important; }
+        #brandTitle { background: none !important; color: var(--ink) !important; }
+        #brandTitle span { color: var(--primary) !important; }
+        #addItemBtn {
+            border-radius: 10px !important;
+            background: var(--primary) !important;
+            box-shadow: none !important;
+            min-height: 42px;
+        }
+        #addItemBtn:hover { background: var(--primary-dark) !important; transform: none !important; }
+
+        #appMain { padding-top: 108px !important; }
+        #pageHeader { margin-bottom: 22px; }
+        #pageHeader h2 { letter-spacing: -.025em; }
+        #totalItemCard {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        #controlsPanel {
+            background: var(--surface) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 14px !important;
+            padding: 16px !important;
+            box-shadow: var(--shadow-sm) !important;
+            backdrop-filter: none !important;
+        }
+        #controlsPanel input, #controlsPanel select {
+            min-height: 44px;
+            border: 1px solid var(--line) !important;
+            border-radius: 10px !important;
+            background: var(--surface-soft) !important;
+            color: var(--ink) !important;
+        }
+        #controlsPanel input:focus, #controlsPanel select:focus,
+        #formModal input:focus, #formModal select:focus, #formModal textarea:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(37,150,190,.12) !important;
+        }
+        #controlsPanel button { border-radius: 10px !important; min-height: 44px; transform: none !important; }
+        #refreshBtn { color: var(--primary) !important; background: #edf8fc !important; border-color: #cdebf5 !important; }
+
+        #loadingIndicator > div > div {
+            border: 1px solid var(--line) !important;
+            border-radius: 14px !important;
+            background: var(--surface) !important;
+            box-shadow: none !important;
+        }
+        #catalogGrid { gap: 18px !important; }
+        #catalogGrid > .group {
+            border: 1px solid var(--line) !important;
+            border-radius: 14px !important;
+            background: var(--surface) !important;
+            box-shadow: var(--shadow-sm) !important;
+            backdrop-filter: none !important;
+            transition: border-color .18s ease, box-shadow .18s ease !important;
+        }
+        #catalogGrid > .group:hover {
+            transform: none !important;
+            border-color: #b8dce9 !important;
+            box-shadow: var(--shadow-md) !important;
+        }
+        #catalogGrid > .group .aspect-square { padding: 8px 8px 0 !important; }
+        #catalogGrid > .group .aspect-square > div {
+            border-radius: 10px !important;
+            box-shadow: none !important;
+        }
+        #catalogGrid > .group img { transition: opacity .18s ease !important; }
+        #catalogGrid > .group:hover img { transform: none !important; }
+        #catalogGrid > .group > button {
+            border: 1px solid var(--line);
+            border-radius: 9px !important;
+            color: var(--primary) !important;
+            background: rgba(255,255,255,.96) !important;
+            backdrop-filter: none !important;
+            box-shadow: var(--shadow-sm) !important;
+        }
+        #catalogGrid > .group > div:last-child { align-items: flex-start !important; text-align: left !important; padding: 14px 16px 16px !important; }
+        #catalogGrid > .group h3 { color: var(--ink) !important; font-size: 16px !important; }
+
+        #formDialog, #detailDialog {
+            background: var(--surface) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 24px 60px rgba(15,23,42,.18) !important;
+            backdrop-filter: none !important;
+        }
+        #formDialog h2 { background: none !important; color: var(--ink) !important; }
+        #formDialog input, #formDialog select, #formDialog textarea {
+            border-color: var(--line) !important;
+            border-radius: 10px !important;
+            background: var(--surface-soft) !important;
+            color: var(--ink) !important;
+        }
+        #imagePreviewContainer { border-radius: 10px !important; background: var(--surface-soft) !important; }
+        #btnSubmit { border-radius: 10px !important; background: var(--primary) !important; box-shadow: none !important; transform: none !important; }
+        #btnSubmit:hover { background: var(--primary-dark) !important; }
+        #detailKode, #detailDialog .fa-ruler-combined, #detailDialog .fa-align-left { color: var(--primary) !important; }
+        #detailDialog > div:first-of-type { border-radius: 12px !important; }
+        #scrollTopBtn { width: 46px; height: 46px; border-radius: 12px !important; background: var(--primary) !important; box-shadow: var(--shadow-md) !important; }
+
+        .swal2-popup.glass-swal {
+            background: #fff !important;
+            color: var(--ink) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 24px 60px rgba(15,23,42,.18) !important;
+            backdrop-filter: none !important;
+        }
+
+        button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+        button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+            outline: 3px solid rgba(37,150,190,.2);
+            outline-offset: 2px;
+        }
+
+        @keyframes catalogImageShimmer {
+            0% { background-position: 180% 0; }
+            100% { background-position: -180% 0; }
+        }
+        .catalog-image-loading {
+            background-color: #edf3f6 !important;
+            background-image: linear-gradient(105deg, #edf3f6 20%, #f9fcfd 38%, #dcecf2 50%, #f9fcfd 62%, #edf3f6 80%) !important;
+            background-size: 220% 100% !important;
+            animation: catalogImageShimmer 1.25s ease-in-out infinite !important;
+            transform: none !important;
+        }
+
+        @media (max-width: 767px) {
+            #appNavShell { min-height: 64px; padding: 0 14px !important; }
+            #appMain { padding-top: 84px !important; padding-left: 14px !important; padding-right: 14px !important; }
+            #pageHeader { align-items: flex-start; gap: 12px; }
+            #pageHeader h2 { font-size: 28px; }
+            #totalItemCard { width: 100%; padding: 12px 14px; }
+            #controlsPanel { padding: 12px !important; }
+            #catalogGrid { gap: 12px !important; }
+            #catalogGrid > .group { display: grid !important; grid-template-columns: 124px minmax(0,1fr); min-height: 132px; }
+            #catalogGrid > .group .aspect-square { width: 124px; height: 100%; min-height: 132px; padding: 7px !important; }
+            #catalogGrid > .group > div:last-child { padding: 14px 12px !important; justify-content: center !important; }
+            #catalogGrid > .group > button { top: 10px !important; right: 10px !important; }
+            #formDialog, #detailDialog { width: calc(100% - 20px) !important; max-height: calc(100dvh - 20px) !important; padding: 18px !important; }
+            #scrollTopBtn { right: 14px; bottom: 14px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#030712] text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen relative overflow-x-hidden selection:bg-amber-500/30 selection:text-amber-600 dark:selection:text-amber-400">
+
+    <!-- Latar belakang blur hanya tampil di desktop untuk menghemat performa HP -->
+    <div id="ambientBackground" class="fixed inset-0 overflow-hidden pointer-events-none z-0 hidden md:block">
+        <div class="blob absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-amber-400/20 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-[100px] opacity-60 dark:opacity-20"></div>
+        <div class="blob animation-delay-2000 absolute top-[20%] right-[-10%] w-[40rem] h-[40rem] bg-orange-500/20 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-[100px] opacity-60 dark:opacity-20"></div>
+        <div class="blob animation-delay-4000 absolute bottom-[-20%] left-[20%] w-[40rem] h-[40rem] bg-indigo-500/10 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-[100px] opacity-60 dark:opacity-20"></div>
+    </div>
+
+    <!-- Floating Pill Navbar -->
+    <nav id="appNav" class="fixed top-4 md:top-6 left-0 right-0 z-50 px-4">
+        <div id="appNavShell" class="max-w-6xl mx-auto bg-white dark:bg-slate-900 md:bg-white/80 md:dark:bg-slate-900/80 md:backdrop-blur-xl border border-slate-200 dark:border-slate-800 md:border-white/60 md:dark:border-slate-700/50 shadow-md md:shadow-lg dark:shadow-black/50 rounded-full px-4 md:px-6 py-3 md:py-4 flex items-center justify-between transition-all duration-300">
+            <div class="flex items-center gap-3">
+                <div id="brandIcon" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-md md:shadow-lg shadow-amber-500/30 shrink-0">
+                    <i class="fa-solid fa-utensils text-sm md:text-lg"></i>
+                </div>
+                <h1 id="brandTitle" class="font-heading font-black text-lg md:text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-slate-100 dark:to-slate-300 truncate">
+                    Bakerzin<span class="text-amber-500">Catalog</span>
+                </h1>
+            </div>
+            
+            <div class="flex items-center gap-2 md:gap-5">
+                <button id="addItemBtn" onclick="requirePin(openModal)" class="group relative px-4 md:px-5 py-2 md:py-2.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold rounded-full shadow-md md:shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 transition-all duration-300 shrink-0">
+                    <span class="flex items-center gap-2 text-sm md:text-base">
+                        <i class="fa-solid fa-plus md:transition-transform md:group-hover:rotate-90"></i> 
+                        <span class="hidden sm:inline">Tambah Item</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="appMain" class="relative z-10 pt-24 md:pt-36 pb-20 px-4 max-w-7xl mx-auto">
+
+        <div id="pageHeader" class="flex flex-col sm:flex-row sm:items-end justify-between mb-6">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400 mb-2">Inventory Management</p>
+                <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-slate-900">Katalog Inventaris</h2>
+                <p class="text-sm text-slate-500 mt-2">Pencarian dan referensi standar equipment Bakerzin.</p>
+            </div>
+            <div id="totalItemCard" class="flex items-center gap-3 px-4 py-3">
+                <div class="w-9 h-9 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <div><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Item</p><p id="totalItemCount" class="text-xl font-extrabold text-slate-800 leading-tight">0</p></div>
+            </div>
+        </div>
+        
+        <!-- Search & Tools Bento Panel -->
+        <div class="bg-white dark:bg-slate-900 md:bg-white/80 md:dark:bg-slate-900/80 md:backdrop-blur-lg border border-slate-100 dark:border-slate-800 md:border-white/60 md:dark:border-slate-700/50 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-sm md:shadow-lg dark:shadow-black/40 mb-6 md:mb-8 transition-all duration-300" id="controlsPanel">
+            <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                
+                <!-- Search & Filter -->
+                <div class="flex flex-col sm:flex-row flex-wrap xl:flex-nowrap gap-3 md:gap-4 w-full lg:w-2/3 flex-1">
+                    <div class="relative w-full xl:min-w-[200px] flex-1 group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-search text-slate-400 group-focus-within:text-amber-500 transition-colors"></i>
+                        </div>
+                        <!-- Input search menggunakan debouncing -->
+                        <input type="text" id="searchInput" placeholder="Cari nama atau kode..." class="w-full bg-slate-50 dark:bg-slate-950 md:bg-slate-100/50 md:dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 md:border-transparent focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-xl md:rounded-2xl pl-11 pr-10 py-2.5 md:py-3 outline-none font-medium placeholder-slate-400 dark:placeholder-slate-500 text-sm md:text-base transition-colors">
+                        
+                        <!-- Tombol Clear Search (Silang) -->
+                        <button id="clearSearchBtn" onclick="clearSearch()" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-amber-500 hidden transition-colors" title="Hapus pencarian">
+                            <i class="fa-solid fa-times-circle text-lg"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="relative w-full sm:w-40 md:w-48 shrink-0">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-filter text-slate-400"></i>
+                        </div>
+                        <select id="filterKategori" class="w-full appearance-none bg-slate-50 dark:bg-slate-950 md:bg-slate-100/50 md:dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 md:border-transparent focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-xl md:rounded-2xl pl-11 pr-10 py-2.5 md:py-3 outline-none font-medium cursor-pointer text-sm md:text-base transition-colors">
+                            <option value="All">Semua Kategori</option>
+                            <option value="Kitchenware">Kitchenware</option>
+                            <option value="Tableware">Tableware</option>
+                            <option value="Glassware">Glassware</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-chevron-down text-slate-400 text-sm"></i>
+                        </div>
+                    </div>
+
+                    <div class="relative w-full sm:w-40 md:w-48 shrink-0">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-sort text-slate-400"></i>
+                        </div>
+                        <select id="sortUrutan" class="w-full appearance-none bg-slate-50 dark:bg-slate-950 md:bg-slate-100/50 md:dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 md:border-transparent focus:border-amber-400/50 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-xl md:rounded-2xl pl-11 pr-10 py-2.5 md:py-3 outline-none font-medium cursor-pointer text-sm md:text-base transition-colors">
+                            <option value="default">Terbaru</option>
+                            <option value="nama_asc">Nama (A - Z)</option>
+                            <option value="nama_desc">Nama (Z - A)</option>
+                            <option value="kode_asc">Kode (A - Z)</option>
+                            <option value="kode_desc">Kode (Z - A)</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-chevron-down text-slate-400 text-sm"></i>
+                        </div>
+                    </div>
+                    
+                    <button onclick="resetFilter()" class="flex items-center justify-center px-4 py-2.5 md:py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl md:rounded-2xl font-bold transition-all text-sm md:text-base shrink-0" title="Reset Pencarian & Filter">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+
+                <!-- Export Buttons -->
+                <div class="flex flex-wrap sm:flex-nowrap gap-2 md:gap-3 w-full lg:w-auto shrink-0 justify-end mt-3 lg:mt-0">
+                    <button id="refreshBtn" onclick="loadData()" class="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-xl md:rounded-2xl font-bold transition-all hover:-translate-y-0.5 text-sm md:text-base">
+                        <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                    </button>
+                    <button onclick="exportToExcel()" class="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl md:rounded-2xl font-bold transition-all hover:-translate-y-0.5 text-sm md:text-base">
+                        <i class="fa-solid fa-file-excel"></i> Excel
+                    </button>
+                    <button onclick="exportToPDF()" class="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 rounded-xl md:rounded-2xl font-bold transition-all hover:-translate-y-0.5 text-sm md:text-base">
+                        <i class="fa-solid fa-file-pdf"></i> PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skeleton Loading -->
+        <div id="loadingIndicator" class="hidden w-full mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                <!-- Looping 4 Skeleton Card -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 md:border-white/60 md:dark:border-slate-700/50 rounded-2xl md:rounded-[2rem] p-3 md:p-4 flex flex-col gap-3 md:gap-4 animate-pulse shadow-sm">
+                    <div class="w-full aspect-square bg-slate-200 dark:bg-slate-800 rounded-[1.2rem] md:rounded-[1.5rem]"></div>
+                    <div class="h-5 bg-slate-200 dark:bg-slate-800 rounded-lg w-3/4 mx-auto"></div>
+                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/2 mx-auto mt-1 md:mt-2"></div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 md:border-white/60 md:dark:border-slate-700/50 rounded-2xl md:rounded-[2rem] p-3 md:p-4 flex flex-col gap-3 md:gap-4 animate-pulse shadow-sm">
+                    <div class="w-full aspect-square bg-slate-200 dark:bg-slate-800 rounded-[1.2rem] md:rounded-[1.5rem]"></div>
+                    <div class="h-5 bg-slate-200 dark:bg-slate-800 rounded-lg w-3/4 mx-auto"></div>
+                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/2 mx-auto mt-1 md:mt-2"></div>
+                </div>
+                <div class="hidden sm:flex bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 md:border-white/60 md:dark:border-slate-700/50 rounded-2xl md:rounded-[2rem] p-3 md:p-4 flex-col gap-3 md:gap-4 animate-pulse shadow-sm">
+                    <div class="w-full aspect-square bg-slate-200 dark:bg-slate-800 rounded-[1.2rem] md:rounded-[1.5rem]"></div>
+                    <div class="h-5 bg-slate-200 dark:bg-slate-800 rounded-lg w-3/4 mx-auto"></div>
+                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/2 mx-auto mt-1 md:mt-2"></div>
+                </div>
+                <div class="hidden lg:flex bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 md:border-white/60 md:dark:border-slate-700/50 rounded-2xl md:rounded-[2rem] p-3 md:p-4 flex-col gap-3 md:gap-4 animate-pulse shadow-sm">
+                    <div class="w-full aspect-square bg-slate-200 dark:bg-slate-800 rounded-[1.2rem] md:rounded-[1.5rem]"></div>
+                    <div class="h-5 bg-slate-200 dark:bg-slate-800 rounded-lg w-3/4 mx-auto"></div>
+                    <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/2 mx-auto mt-1 md:mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="catalogGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            <!-- Cards will be dynamically inserted here -->
+        </div>
+        
+        <div id="emptyState" class="hidden flex-col items-center justify-center py-20 text-center">
+            <div class="w-20 h-20 md:w-24 md:h-24 mb-6 rounded-full bg-slate-200/50 dark:bg-slate-800/50 flex items-center justify-center">
+                <i class="fa-solid fa-box-open text-3xl md:text-4xl text-slate-400"></i>
+            </div>
+            <h3 class="font-heading font-extrabold text-xl md:text-2xl text-slate-700 dark:text-slate-300 mb-2">Belum Ada Item</h3>
+            <p class="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-sm">Data katalog tidak ditemukan atau belum ada item yang ditambahkan.</p>
+        </div>
+
+    </main>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-6 right-6 z-40 w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/30 transform translate-y-24 opacity-0 transition-all duration-300 flex items-center justify-center hover:-translate-y-1 hover:shadow-orange-500/50 cursor-pointer">
+        <i class="fa-solid fa-arrow-up text-lg md:text-xl"></i>
+    </button>
+
+    <!-- Glass Modal Form -->
+    <div id="formModal" class="fixed inset-0 z-[100] hidden opacity-0 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-slate-900/55" onclick="closeModal()"></div>
+        
+        <div id="formDialog" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[95%] md:w-[90%] max-w-3xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900 md:bg-white/90 md:dark:bg-slate-900/90 md:backdrop-blur-3xl border border-slate-200 dark:border-slate-800 md:border-white/60 md:dark:border-slate-700/50 rounded-2xl md:rounded-3xl shadow-xl md:shadow-2xl p-5 md:p-8">
+            
+            <div class="flex justify-between items-center mb-5 md:mb-8 sticky top-0 bg-white dark:bg-slate-900 md:bg-transparent pb-3 md:pb-4 z-20">
+                <div>
+                    <h2 id="modalTitle" class="font-heading font-black text-xl md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-500">Tambah Item Baru</h2>
+                    <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5 md:mt-1 font-medium">Lengkapi detail inventaris di bawah ini.</p>
+                </div>
+                <button onclick="closeModal()" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-red-500/10 hover:text-red-500 text-slate-500 transition-colors flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-times text-lg md:text-xl"></i>
+                </button>
+            </div>
+
+            <form id="itemForm" onsubmit="submitForm(event)">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div class="space-y-4 md:space-y-5">
+                        <div>
+                            <label class="block text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 md:mb-2">Nama Item</label>
+                            <input type="text" id="f_nama" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-xl md:rounded-2xl px-3 md:px-4 py-2.5 md:py-3 outline-none font-medium transition-all text-sm md:text-base">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 md:mb-2">Kode Item</label>
+                            <input type="text" id="f_kode" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-xl md:rounded-2xl px-3 md:px-4 py-2.5 md:py-3 outline-none font-medium uppercase transition-all text-sm md:text-base" placeholder="CT-001">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 md:mb-2">Kategori</label>
+                            <select id="f_kategori" required class="w-full appearance-none bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-xl md:rounded-2xl px-3 md:px-4 py-2.5 md:py-3 outline-none font-medium transition-all cursor-pointer text-sm md:text-base">
+                                <option value="" disabled selected>Pilih Kategori...</option>
+                                <option value="Kitchenware">Kitchenware</option>
+                                <option value="Tableware">Tableware</option>
+                                <option value="Glassware">Glassware</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 md:space-y-5">
+                        <div>
+                            <label class="block text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 md:mb-2">Dimensi Fisik (cm)</label>
+                            <div class="grid grid-cols-2 gap-2 md:gap-3">
+                                <input type="text" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.,]/g, '').replace(/\./g, ',')" id="f_panjang" placeholder="Panjang" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-lg md:rounded-xl px-3 py-2 outline-none font-medium text-xs md:text-sm transition-all">
+                                <input type="text" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.,]/g, '').replace(/\./g, ',')" id="f_lebar" placeholder="Lebar" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-lg md:rounded-xl px-3 py-2 outline-none font-medium text-xs md:text-sm transition-all">
+                                <input type="text" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.,]/g, '').replace(/\./g, ',')" id="f_tinggi" placeholder="Tinggi" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-lg md:rounded-xl px-3 py-2 outline-none font-medium text-xs md:text-sm transition-all">
+                                <input type="text" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.,]/g, '').replace(/\./g, ',')" id="f_diameter" placeholder="Diameter" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-lg md:rounded-xl px-3 py-2 outline-none font-medium text-xs md:text-sm transition-all">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 md:mb-2 flex justify-between">
+                                Foto Item (Max 5)
+                            </label>
+                            <div class="relative group">
+                                <input type="file" id="f_gambar" accept="image/*" multiple onchange="previewAndCompressImages(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" title="Pilih maksimal 5 foto">
+                                <div id="imagePreviewContainer" class="w-full min-h-[6rem] bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl md:rounded-2xl p-2 flex flex-wrap items-center justify-center gap-2 text-slate-500 overflow-hidden transition-all group-hover:border-amber-400 group-hover:bg-amber-500/5 relative">
+                                    <div id="uploadPlaceholder" class="flex flex-col items-center justify-center w-full py-4 pointer-events-none transition-all">
+                                        <i class="fa-solid fa-images text-xl md:text-2xl mb-1 md:mb-2"></i>
+                                        <span class="text-[10px] md:text-xs font-bold text-center">Tap / Klik untuk Pilih Foto<br>(Bisa tambah terus, maks. 5)</span>
+                                    </div>
+                                    <!-- Multiple thumbnails appended here via JS -->
+                                </div>
+                            </div>
+                            <!-- Panel Action Foto -->
+                            <div id="imageActions" class="flex justify-between items-center mt-2 px-1 hidden">
+                                <span id="imageCount" class="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">0 / 5 Foto</span>
+                                <button type="button" onclick="clearImagePreview()" class="text-[10px] md:text-xs font-bold text-red-500 hover:text-red-600 transition-colors"><i class="fa-solid fa-trash mr-1"></i>Reset Foto</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 md:mt-5">
+                    <label class="block text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 md:mb-2">Keterangan / Catatan</label>
+                    <textarea id="f_keterangan" rows="2" class="w-full custom-scrollbar bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 text-slate-800 dark:text-slate-200 rounded-xl md:rounded-2xl px-3 md:px-4 py-2.5 md:py-3 outline-none font-medium transition-all text-sm md:text-base"></textarea>
+                </div>
+
+                <div class="mt-5 md:mt-8 flex justify-end items-center gap-2 md:gap-3 flex-wrap">
+                    <button type="button" id="btnDelete" onclick="deleteItemAction()" class="hidden px-4 md:px-6 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-bold bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 transition-colors text-sm md:text-base mr-auto">
+                        <i class="fa-solid fa-trash mr-1"></i> Hapus
+                    </button>
+                    
+                    <button type="button" onclick="closeModal()" class="px-4 md:px-6 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm md:text-base">Batal</button>
+                    <button type="submit" id="btnSubmit" class="px-5 md:px-8 py-2.5 md:py-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold rounded-xl md:rounded-2xl shadow-md md:shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 transition-all text-sm md:text-base flex items-center">
+                        <span id="btnSubmitText">Simpan Item</span>
+                        <i id="btnSubmitLoading" class="fa-solid fa-circle-notch fa-spin hidden ml-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DETAIL ITEM MODAL -->
+    <div id="detailModal" class="fixed inset-0 z-[150] hidden opacity-0 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-slate-900/55" onclick="closeDetailModal()"></div>
+        <div id="detailDialog" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[95%] md:w-[90%] max-w-3xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900 md:bg-white/90 md:dark:bg-slate-900/90 md:backdrop-blur-3xl border border-slate-200 dark:border-slate-800 rounded-2xl md:rounded-3xl shadow-xl p-5 flex flex-col md:flex-row gap-5 md:gap-6">
+            
+            <button onclick="closeDetailModal()" class="md:hidden absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center z-10 shadow-sm border border-slate-200 dark:border-slate-700">
+                <i class="fa-solid fa-times"></i>
+            </button>
+
+            <!-- Multiple Image Section -->
+            <div class="w-full md:w-1/2 flex flex-col gap-2 shrink-0 mt-2 md:mt-0">
+                <!-- Main Image -->
+                <div class="w-full rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 aspect-square relative group cursor-zoom-in" onclick="openLightbox(document.getElementById('detailImgMain').src)">
+                     <img id="detailImgMain" src="" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none flex items-center justify-center">
+                         <i class="fa-solid fa-search-plus text-white text-3xl opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md"></i>
+                     </div>
+                </div>
+                <!-- Thumbnails List -->
+                <div id="detailThumbnails" class="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+                    <!-- JavaScript will inject thumbnails here -->
+                </div>
+            </div>
+            
+            <!-- Content Section -->
+            <div class="w-full md:w-1/2 flex flex-col pt-1 md:pt-0 h-full">
+                <div class="flex justify-between items-start mb-2">
+                    <span id="detailKategori" class="px-3 py-1 text-[10px] md:text-xs font-bold rounded-full border">Kategori</span>
+                    <button onclick="closeDetailModal()" class="hidden md:flex w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:text-red-500 hover:bg-red-500/10 text-slate-500 transition-colors items-center justify-center shrink-0">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                
+                <h2 id="detailNama" class="font-heading font-extrabold text-2xl md:text-3xl mb-1 text-slate-800 dark:text-slate-100 leading-tight">Nama Item</h2>
+                <p id="detailKode" class="text-sm md:text-base font-bold text-amber-500 mb-5">KODE-123</p>
+
+                <div class="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 rounded-xl p-3 md:p-4 mb-5">
+                    <span class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block mb-2"><i class="fa-solid fa-ruler-combined text-amber-500 mr-1.5"></i> Dimensi Fisik</span>
+                    <p id="detailDimensi" class="text-sm md:text-base font-bold text-slate-700 dark:text-slate-200">P: - | L: - | T: - | Ø: -</p>
+                </div>
+
+                <div class="flex-1">
+                    <span class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block mb-2"><i class="fa-solid fa-align-left text-amber-500 mr-1.5"></i> Keterangan / Catatan</span>
+                    <p id="detailKeterangan" class="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line custom-scrollbar overflow-y-auto max-h-32 md:max-h-full pr-2">Keterangan item disini...</p>
+                </div>
+
+                <!-- ADD WHATSAPP BUTTON HERE -->
+                <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50 flex justify-end">
+                    <button onclick="shareToWhatsApp()" class="w-full md:w-auto flex justify-center items-center gap-2 px-5 py-2.5 bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/20 rounded-xl md:rounded-2xl font-bold transition-all hover:-translate-y-0.5 text-sm md:text-base">
+                        <i class="fa-brands fa-whatsapp text-xl"></i> Bagikan ke WA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIGHTBOX MODAL -->
+    <div id="lightboxModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4 bg-slate-900/95 transition-opacity duration-300 opacity-0" onclick="closeLightbox()">
+        <div class="relative max-w-4xl max-h-full flex items-center justify-center" onclick="event.stopPropagation()">
+            <img id="lightboxImg" src="" class="max-w-full max-h-[85vh] rounded-[1rem] md:rounded-[2rem] shadow-2xl border border-white/10 transform transition-transform duration-300 scale-95 opacity-0">
+            <button onclick="closeLightbox()" class="absolute -top-12 md:-top-14 right-0 text-white/60 hover:text-white hover:text-amber-400 text-3xl md:text-4xl transition drop-shadow-md p-2" title="Tutup">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        /*
+         * Adapter GitHub Pages -> Google Apps Script.
+         * Jika halaman dibuka dari Apps Script, google.script.run bawaan tetap dipakai.
+         */
+        (function installAppsScriptBridge() {
+            window.google = window.google || {};
+            google.script = google.script || {};
+            if (google.script.run) return;
+
+            const apiUrl = String((window.APP_CONFIG && window.APP_CONFIG.API_URL) || '').trim();
+
+            async function callApi(action, args) {
+                if (!apiUrl || apiUrl.includes('PASTE_APPS_SCRIPT')) {
+                    throw new Error('Backend belum dikonfigurasi. Isi API_URL pada config.js dengan URL Web App Google Apps Script.');
+                }
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: action, args: args })
+                });
+
+                const raw = await response.text();
+                let payload;
+                try {
+                    payload = JSON.parse(raw);
+                } catch (error) {
+                    throw new Error('Respons backend tidak valid. Pastikan deployment menggunakan akses Anyone dan URL /exec, bukan /dev.');
+                }
+
+                if (!response.ok || !payload.ok) {
+                    throw new Error(payload.error || ('HTTP ' + response.status));
+                }
+                return payload.result;
+            }
+
+            function createRunner(successHandler, failureHandler) {
+                return new Proxy({}, {
+                    get: function(_target, property) {
+                        if (property === 'withSuccessHandler') {
+                            return function(handler) { return createRunner(handler, failureHandler); };
+                        }
+                        if (property === 'withFailureHandler') {
+                            return function(handler) { return createRunner(successHandler, handler); };
+                        }
+                        return function() {
+                            const args = Array.from(arguments);
+                            callApi(String(property), args)
+                                .then(function(result) { if (successHandler) successHandler(result); })
+                                .catch(function(error) {
+                                    if (failureHandler) failureHandler(error);
+                                    else console.error(error);
+                                });
+                        };
+                    }
+                });
+            }
+
+            google.script.run = createRunner(null, null);
+        })();
+
+        // PIN Cache sementara untuk frontend
+        let activePin = ''; 
+        let editingItemId = null; 
+        let currentOpenedItem = null; // Menyimpan data item yang sedang dibuka di modal
+
+        const IMAGE_LOADING_SRC = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"></svg>'
+        );
+
+        function createImageStateSvg(title, accent) {
+            return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+                    <rect width="800" height="600" fill="#f3f7f9"/>
+                    <rect x="310" y="205" width="180" height="145" rx="28" fill="#ffffff" stroke="#dce7ec" stroke-width="8"/>
+                    <circle cx="365" cy="255" r="18" fill="${accent}" opacity=".45"/>
+                    <path d="M330 325l62-62 42 42 25-25 31 45z" fill="${accent}" opacity=".72"/>
+                    <text x="400" y="410" text-anchor="middle" font-family="Arial,sans-serif" font-size="28" font-weight="700" fill="#647386">${title}</text>
+                </svg>
+            `);
+        }
+
+        const IMAGE_EMPTY_SRC = createImageStateSvg('Foto belum tersedia', '#2596BE');
+        const IMAGE_ERROR_SRC = createImageStateSvg('Foto gagal dimuat', '#c3002f');
+
+        function setImageLoading(imgEl) {
+            if (!imgEl) return;
+            imgEl.onerror = null;
+            imgEl.dataset.imageState = 'loading';
+            imgEl.classList.add('catalog-image-loading');
+            imgEl.src = IMAGE_LOADING_SRC;
+        }
+
+        function setImageReady(imgEl, src) {
+            if (!imgEl) return;
+            imgEl.dataset.imageState = 'ready';
+            imgEl.classList.remove('catalog-image-loading');
+            imgEl.onerror = function() {
+                this.onerror = null;
+                setImageError(this);
+            };
+            imgEl.src = src;
+        }
+
+        function setImageEmpty(imgEl) {
+            if (!imgEl) return;
+            imgEl.onerror = null;
+            imgEl.dataset.imageState = 'empty';
+            imgEl.classList.remove('catalog-image-loading');
+            imgEl.src = IMAGE_EMPTY_SRC;
+        }
+
+        function setImageError(imgEl) {
+            if (!imgEl) return;
+            imgEl.onerror = null;
+            imgEl.dataset.imageState = 'error';
+            imgEl.classList.remove('catalog-image-loading');
+            imgEl.src = IMAGE_ERROR_SRC;
+        }
+        
+        // Multi-image Array
+        let currentImagesBase64 = []; 
+        let keepExistingImages = true; 
+        
+        let appData = [
+            { id: 1, nama: 'Piring Saji Keramik 10"', kategori: 'Tableware', kode: 'TW-001', panjang: '', lebar: '', tinggi: '3', diameter: '25', keterangan: 'Mock Data Preview', gambarUrl: 'https://images.unsplash.com/photo-1613946069412-38f7f1ff0b65?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60' }
+        ];
+        
+        // Paginasi & Filtering Cache
+        let currentFilteredData = [];
+        let currentPage = 1; 
+        const itemsPerPage = 12; // Menampilkan 12 item (3 baris di desktop) per halaman
+
+        // Fungsi Debounce untuk meringankan performa pengetikan pencarian
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        const formatDimForDisplay = (val) => {
+            if (!val) return '';
+            if (String(val).includes('GMT') || String(val).includes('Waktu Indonesia')) {
+                return 'Format Salah di Sheet';
+            }
+            return String(val).replace('.', ',');
+        };
+
+        const GlassAlert = Swal.mixin({
+            customClass: {
+                popup: 'glass-swal',
+                confirmButton: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-xl px-6 py-2.5 font-bold shadow-lg shadow-orange-500/30 border-none outline-none',
+                cancelButton: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-xl px-6 py-2.5 font-bold'
+            },
+            buttonsStyling: false
+        });
+
+        const Toast = Swal.mixin({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
+            timerProgressBar: true, customClass: { popup: 'glass-swal !rounded-xl' }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Dashboard operasional memakai tema terang yang konsisten dengan COGS & SLNC.
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+
+            // Pasang Debounce pada Input Search (300ms) - Selalu reset ke halaman 1 saat filter
+            const debouncedSearch = debounce(() => renderCatalog(true), 300);
+            
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                // Tampilkan/Sembunyikan tombol X clear search
+                const btn = document.getElementById('clearSearchBtn');
+                if(e.target.value.trim().length > 0) btn.classList.remove('hidden');
+                else btn.classList.add('hidden');
+                
+                debouncedSearch();
+            });
+            
+            document.getElementById('filterKategori').addEventListener('change', () => renderCatalog(true));
+            document.getElementById('sortUrutan').addEventListener('change', () => renderCatalog(true));
+            
+            loadData();
+        });
+
+        // Event listener untuk tombol ESCAPE (Peningkatan UX)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!document.getElementById('lightboxModal').classList.contains('hidden')) closeLightbox();
+                else if (!document.getElementById('detailModal').classList.contains('hidden')) closeDetailModal();
+                else if (!document.getElementById('formModal').classList.contains('hidden')) closeModal();
+            }
+        });
+
+        // Event Listener untuk memunculkan tombol Scroll to Top
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('scrollTopBtn');
+            if (window.scrollY > 400) {
+                btn.classList.remove('translate-y-24', 'opacity-0');
+            } else {
+                btn.classList.add('translate-y-24', 'opacity-0');
+            }
+        });
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            renderCatalog(true);
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+
+        function resetFilter() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            document.getElementById('filterKategori').value = 'All';
+            document.getElementById('sortUrutan').value = 'default';
+            renderCatalog(true);
+        }
+
+        function requirePin(actionCallback) {
+            if (activePin) return actionCallback();
+
+            Swal.fire({
+                title: 'Otorisasi Diperlukan',
+                text: 'Masukkan PIN Administrator untuk melanjutkan',
+                input: 'password',
+                inputPlaceholder: 'PIN...',
+                inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa-solid fa-unlock mr-2"></i> Buka Akses',
+                cancelButtonText: 'Batal',
+                customClass: {
+                    popup: 'glass-swal',
+                    input: 'bg-slate-100 dark:bg-slate-800 text-center text-xl font-bold tracking-widest rounded-xl !border-transparent focus:!border-amber-400 focus:!ring-amber-400/50',
+                    confirmButton: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-xl px-6 py-2.5 font-bold shadow-lg shadow-orange-500/30 border-none w-full mb-2',
+                    cancelButton: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-xl px-6 py-2.5 font-bold w-full m-0'
+                },
+                buttonsStyling: false,
+                preConfirm: (pin) => {
+                    if (!pin) { Swal.showValidationMessage('PIN tidak boleh kosong!'); return false; }
+                    return pin;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) { activePin = result.value; actionCallback(); }
+            });
+        }
+
+        function openLightbox(src) {
+            if(!src || src.startsWith('data:image/svg+xml')) return; 
+            let hdSrc = src.replace('sz=w400', 'sz=w1000').replace('sz=w800', 'sz=w1200');
+            const modal = document.getElementById('lightboxModal');
+            const img = document.getElementById('lightboxImg');
+            img.src = hdSrc;
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                img.classList.remove('opacity-0', 'scale-95');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('lightboxModal');
+            const img = document.getElementById('lightboxImg');
+            modal.classList.add('opacity-0');
+            img.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                img.src = '';
+                if(document.getElementById('formModal').classList.contains('hidden') && document.getElementById('detailModal').classList.contains('hidden')) {
+                    document.body.style.overflow = 'auto';
+                }
+            }, 300);
+        }
+
+        function loadData() {
+            if (typeof google !== 'undefined') {
+                // Tampilkan Efek Skeleton UI Baru
+                document.getElementById('loadingIndicator').classList.remove('hidden');
+                document.getElementById('loadingIndicator').classList.add('flex'); // Pakai flex agar mengambil space penuH
+                document.getElementById('catalogGrid').innerHTML = '';
+                
+                google.script.run
+                    .withSuccessHandler(function(data) {
+                        if (Array.isArray(data)) appData = data.filter(item => item && item.nama);
+                        else appData = [];
+                        document.getElementById('totalItemCount').innerText = appData.length;
+                        
+                        document.getElementById('loadingIndicator').classList.add('hidden');
+                        document.getElementById('loadingIndicator').classList.remove('flex');
+                        renderCatalog(true);
+                    })
+                    .withFailureHandler(function(err) {
+                        document.getElementById('loadingIndicator').classList.add('hidden');
+                        document.getElementById('loadingIndicator').classList.remove('flex');
+                        Toast.fire({ icon: 'error', title: 'Gagal memuat data' });
+                    })
+                    .getItems();
+            } else {
+                document.getElementById('totalItemCount').innerText = appData.length;
+                renderCatalog(true);
+            }
+        }
+
+        // --- SISTEM PAGINASI & RENDERING ---
+        function renderCatalog(resetPage = false) {
+            if (resetPage) currentPage = 1; // Kembali ke hal 1 tiap ada pencarian/filter baru
+
+            const grid = document.getElementById('catalogGrid');
+            const emptyState = document.getElementById('emptyState');
+            const searchQ = document.getElementById('searchInput').value.toLowerCase();
+            const filterCat = document.getElementById('filterKategori').value;
+            const sortVal = document.getElementById('sortUrutan').value;
+
+            // 1. Filter Data
+            currentFilteredData = appData.filter(item => {
+                if (!item || !item.nama) return false; 
+                const namaItem = String(item.nama).toLowerCase();
+                const kodeItem = item.kode ? String(item.kode).toLowerCase() : '';
+                const matchSearch = namaItem.includes(searchQ) || kodeItem.includes(searchQ);
+                const matchCat = filterCat === 'All' ? true : item.kategori === filterCat;
+                return matchSearch && matchCat;
+            });
+
+            // 2. Sorting Data
+            if (sortVal === 'nama_asc') currentFilteredData.sort((a, b) => String(a.nama).localeCompare(String(b.nama)));
+            else if (sortVal === 'nama_desc') currentFilteredData.sort((a, b) => String(b.nama).localeCompare(String(a.nama)));
+            else if (sortVal === 'kode_asc') currentFilteredData.sort((a, b) => String(a.kode || '').localeCompare(String(b.kode || '')));
+            else if (sortVal === 'kode_desc') currentFilteredData.sort((a, b) => String(b.kode || '').localeCompare(String(a.kode || '')));
+
+            grid.innerHTML = '';
+
+            if (currentFilteredData.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+
+                // 3. Batasi item berdasarkan Halaman Aktif (Pagination slice)
+                const totalPages = Math.ceil(currentFilteredData.length / itemsPerPage);
+                
+                // Mencegah error page jika data terfilter lebih sedikit dari page yang aktif
+                if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+                
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const itemsToRender = currentFilteredData.slice(startIndex, startIndex + itemsPerPage);
+
+                itemsToRender.forEach(item => {
+                    let fileIds = item.fileId ? item.fileId.toString().split(',') : [];
+                    let firstFileId = fileIds[0] || '';
+                    let imgCountBadge = fileIds.length > 1 ? `<span class="px-2 py-1 text-[10px] md:text-xs font-bold rounded-md bg-slate-900/70 text-white flex items-center"><i class="fa-solid fa-images mr-1"></i> ${fileIds.length}</span>` : '';
+
+                    const card = `
+                        <div class="group bg-white dark:bg-slate-900 md:bg-white/80 md:dark:bg-slate-900/80 md:backdrop-blur-lg border border-slate-100 dark:border-slate-800 md:border-white/60 md:dark:border-slate-700/50 rounded-2xl md:rounded-[2rem] shadow-sm md:shadow-xl dark:shadow-black/30 overflow-hidden md:hover:-translate-y-1 transition-transform duration-300 flex flex-col relative cursor-pointer" onclick="openDetailModal('${item.id}')">
+                            <button onclick="event.stopPropagation(); requirePin(() => editItem('${item.id}'))" class="absolute top-3 right-3 z-20 w-8 h-8 md:w-10 md:h-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-full text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 shadow-sm flex items-center justify-center transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 md:hover:scale-110">
+                                <i class="fa-solid fa-pen text-sm md:text-base"></i>
+                            </button>
+                            <div class="relative aspect-square w-full p-2 shrink-0">
+                                <div class="w-full h-full rounded-[1.2rem] md:rounded-[1.5rem] overflow-hidden bg-slate-100 dark:bg-slate-800 relative shadow-inner md:group-hover:ring-2 ring-amber-400/50 transition-all">
+                                    <img id="img-${item.id}" src="${IMAGE_LOADING_SRC}" alt="${item.nama}" loading="lazy" class="catalog-image-loading w-full h-full object-cover transition-transform duration-700 md:group-hover:scale-105" data-image-state="loading" data-first-id="${firstFileId}">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none"></div>
+                                    <div class="absolute bottom-3 left-3 right-3 flex justify-between items-end pointer-events-none">
+                                        <span class="px-2 md:px-3 py-1 text-[10px] md:text-xs font-bold rounded-md bg-slate-900/70 text-white">${item.kode || '-'}</span>
+                                        ${imgCountBadge}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 md:p-5 flex-1 flex flex-col items-center justify-center text-center">
+                                <h3 class="font-heading font-extrabold text-base md:text-lg text-slate-800 dark:text-slate-100 leading-snug line-clamp-2">${item.nama}</h3>
+                            </div>
+                        </div>
+                    `;
+                    grid.insertAdjacentHTML('beforeend', card);
+                });
+                
+                // 4. Render UI Paginasi
+                renderPagination(totalPages);
+
+                loadImagesFast(itemsToRender);
+            }
+        }
+
+        // Komponen UI Paginasi Nomor Halaman
+        function renderPagination(totalPages) {
+            if (totalPages <= 1) return; // Tidak perlu paginasi jika cuma 1 halaman
+            const grid = document.getElementById('catalogGrid');
+            
+            let paginationHtml = `<div class="col-span-full flex justify-center items-center gap-2 md:gap-3 mt-8 mb-4">`;
+            
+            // Tombol Prev
+            const isPrevDisabled = currentPage === 1;
+            paginationHtml += `
+                <button onclick="changePage(${currentPage - 1})" 
+                    class="w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-xl md:rounded-2xl font-bold transition-colors shadow-sm 
+                    ${isPrevDisabled ? 'bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-800/50 dark:text-slate-600 border border-transparent' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 hover:-translate-x-0.5'}" 
+                    ${isPrevDisabled ? 'disabled' : ''}>
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+            `;
+            
+            // Logika menampilkan angka (Maksimal 3 angka berurutan agar rapi di HP)
+            let startPage = Math.max(1, currentPage - 1);
+            let endPage = Math.min(totalPages, startPage + 2);
+            if (endPage - startPage < 2) startPage = Math.max(1, endPage - 2);
+            
+            // Angka 1 selalu muncul di ujung
+            if(startPage > 1) {
+                paginationHtml += `<button onclick="changePage(1)" class="hidden sm:flex w-10 h-10 md:w-11 md:h-11 items-center justify-center rounded-xl md:rounded-2xl font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-sm dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700">1</button>`;
+                if(startPage > 2) paginationHtml += `<span class="hidden sm:inline px-1 text-slate-400 dark:text-slate-500 font-bold">...</span>`;
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === currentPage) {
+                    paginationHtml += `<button class="w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-xl md:rounded-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/30 transform scale-105">${i}</button>`;
+                } else {
+                    paginationHtml += `<button onclick="changePage(${i})" class="w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-xl md:rounded-2xl font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-sm dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 transition-colors">${i}</button>`;
+                }
+            }
+            
+            // Angka Terakhir selalu muncul di ujung
+            if(endPage < totalPages) {
+                if(endPage < totalPages - 1) paginationHtml += `<span class="hidden sm:inline px-1 text-slate-400 dark:text-slate-500 font-bold">...</span>`;
+                paginationHtml += `<button onclick="changePage(${totalPages})" class="hidden sm:flex w-10 h-10 md:w-11 md:h-11 items-center justify-center rounded-xl md:rounded-2xl font-bold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-sm dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700">${totalPages}</button>`;
+            }
+            
+            // Tombol Next
+            const isNextDisabled = currentPage === totalPages;
+            paginationHtml += `
+                <button onclick="changePage(${currentPage + 1})" 
+                    class="w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-xl md:rounded-2xl font-bold transition-colors shadow-sm 
+                    ${isNextDisabled ? 'bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-800/50 dark:text-slate-600 border border-transparent' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 hover:translate-x-0.5'}" 
+                    ${isNextDisabled ? 'disabled' : ''}>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            `;
+            
+            paginationHtml += `</div>`;
+            
+            // Info text halaman
+            paginationHtml += `<div class="col-span-full text-center mt-1 text-[11px] md:text-xs font-bold tracking-wide text-slate-400 dark:text-slate-500 uppercase">Menampilkan Hal ${currentPage} dari ${totalPages}</div>`;
+            
+            grid.insertAdjacentHTML('beforeend', paginationHtml);
+        }
+
+        // Action saat tombol paginasi di-klik
+        function changePage(page) {
+            currentPage = page;
+            renderCatalog(false);
+            
+            // Smooth Scroll kembali ke area panel pencarian agar user langsung melihat item pertama di halaman baru
+            const controlsPanel = document.getElementById('controlsPanel');
+            if (controlsPanel) {
+                const yOffset = -100; // offset untuk navbar yang melayang
+                const y = controlsPanel.getBoundingClientRect().top + window.scrollY + yOffset;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+        }
+
+        function openDetailModal(id) {
+            const item = appData.find(i => String(i.id) === String(id));
+            if (!item) return;
+            
+            currentOpenedItem = item; // Simpan ke global variable untuk fitur WA
+
+            document.getElementById('detailNama').innerText = item.nama;
+            document.getElementById('detailKode').innerText = item.kode || '-';
+            
+            const badge = document.getElementById('detailKategori');
+            badge.innerText = item.kategori || 'Tanpa Kategori';
+            badge.className = 'px-3 py-1 text-[10px] md:text-xs font-bold rounded-full border';
+            if(item.kategori === 'Kitchenware') badge.classList.add('bg-orange-500/10', 'text-orange-600', 'dark:text-orange-400', 'border-orange-500/20');
+            else if(item.kategori === 'Tableware') badge.classList.add('bg-emerald-500/10', 'text-emerald-600', 'dark:text-emerald-400', 'border-emerald-500/20');
+            else if(item.kategori === 'Glassware') badge.classList.add('bg-indigo-500/10', 'text-indigo-600', 'dark:text-indigo-400', 'border-indigo-500/20');
+            else badge.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300', 'border-slate-200', 'dark:border-slate-700');
+
+            let dims = [];
+            if(item.panjang) dims.push(`P: ${formatDimForDisplay(item.panjang)}`);
+            if(item.lebar) dims.push(`L: ${formatDimForDisplay(item.lebar)}`);
+            if(item.tinggi) dims.push(`T: ${formatDimForDisplay(item.tinggi)}`);
+            if(item.diameter) dims.push(`Ø: ${formatDimForDisplay(item.diameter)}`);
+            document.getElementById('detailDimensi').innerText = dims.length > 0 ? dims.join('  |  ') + ' cm' : '-';
+            document.getElementById('detailKeterangan').innerText = item.keterangan || 'Tidak ada keterangan untuk item ini.';
+
+            let fileIds = item.fileId ? item.fileId.toString().split(',') : [];
+            if (fileIds.length === 0 && item.gambarUrl) fileIds = [item.gambarUrl];
+
+            const mainImg = document.getElementById('detailImgMain');
+            const thumbContainer = document.getElementById('detailThumbnails');
+            thumbContainer.innerHTML = ''; 
+
+            if (fileIds.length > 0 && fileIds[0] !== "") {
+                setImageLoading(mainImg);
+                loadCatalogImage(mainImg, fileIds[0]);
+
+                if (fileIds.length > 1) {
+                    fileIds.forEach((id, index) => {
+                        const thumb = document.createElement('img');
+                        thumb.className = `w-14 h-14 md:w-16 md:h-16 rounded-xl object-cover cursor-pointer border-2 transition-all shrink-0 ${index === 0 ? 'border-amber-500 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`;
+                        setImageLoading(thumb);
+                        loadCatalogImage(thumb, id).then(src => {
+                            if (index === 0 && src) setImageReady(mainImg, src);
+                        });
+                        
+                        thumb.onclick = (e) => {
+                            mainImg.src = e.target.src;
+                            Array.from(thumbContainer.children).forEach(c => {
+                                c.classList.remove('border-amber-500', 'opacity-100');
+                                c.classList.add('border-transparent', 'opacity-50');
+                            });
+                            e.target.classList.remove('border-transparent', 'opacity-50');
+                            e.target.classList.add('border-amber-500', 'opacity-100');
+                        };
+                        thumbContainer.appendChild(thumb);
+                    });
+                }
+            } else {
+                setImageEmpty(mainImg);
+            }
+
+            const modal = document.getElementById('detailModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detailModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                currentOpenedItem = null; // Reset
+                if(document.getElementById('formModal').classList.contains('hidden') && document.getElementById('lightboxModal').classList.contains('hidden')) {
+                    document.body.style.overflow = 'auto';
+                }
+            }, 300);
+        }
+
+        // --- FITUR BARU: SHARE TO WHATSAPP (DENGAN GAMBAR) ---
+        async function shareToWhatsApp() {
+            if (!currentOpenedItem) return;
+            const item = currentOpenedItem;
+            
+            let dimStr = `P: ${formatDimForDisplay(item.panjang)||'-'} | L: ${formatDimForDisplay(item.lebar)||'-'} | T: ${formatDimForDisplay(item.tinggi)||'-'} | Ø: ${formatDimForDisplay(item.diameter)||'-'}`;
+            
+            let text = `*📦 DETAIL INVENTARIS BAKERZIN*\n\n`;
+            text += `*Nama Item:* ${item.nama}\n`;
+            text += `*Kode:* ${item.kode || '-'}\n`;
+            text += `*Kategori:* ${item.kategori || '-'}\n\n`;
+            text += `*Dimensi (cm):*\n${dimStr}\n\n`;
+            text += `*Keterangan:*\n${item.keterangan || '-'}`;
+
+            // Ekstrak File ID Gambar
+            let fileIdStr = item.fileId ? item.fileId.toString().split(',')[0] : '';
+            if (!fileIdStr && item.gambarUrl) fileIdStr = item.gambarUrl;
+
+            let fileId = fileIdStr;
+            if (fileId.includes('id=')) fileId = fileId.split('id=')[1];
+            else if (fileId.includes('/d/')) fileId = fileId.match(/\/d\/([a-zA-Z0-9_-]+)/)[1];
+
+            // 1. OPSI PERTAMA: Gunakan Web Share API (Bisa kirim File Foto Asli, Khusus Mobile / Safari / Edge Modern)
+            if (navigator.share && navigator.canShare && fileId) {
+                try {
+                    Swal.fire({
+                        title: 'Menyiapkan Gambar...',
+                        html: 'Mengambil foto untuk dibagikan ke WhatsApp...',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+
+                    // Ambil atau manfaatkan cache base64
+                    let base64Data = item.cachedImageBase64;
+                    if (!base64Data) {
+                        base64Data = await fetchBase64Async(fileId);
+                        if(base64Data) {
+                            // Kompres sedikit ukurannya agar proses "Share" ke WA lebih ringan & tidak lag
+                            base64Data = await downscaleImageForPDF(base64Data);
+                            item.cachedImageBase64 = base64Data; // Simpan ke cache
+                        }
+                    }
+
+                    if (base64Data) {
+                        // Konversi Base64 menjadi Blob lalu menjadi File
+                        const res = await fetch(base64Data);
+                        const blob = await res.blob();
+                        const file = new File([blob], `Katalog_Bakerzin_${item.kode || 'Item'}.jpg`, { type: blob.type || 'image/jpeg' });
+
+                        // Cek jika browser mengizinkan membagikan file ini
+                        if (navigator.canShare({ files: [file] })) {
+                            Swal.close();
+                            
+                            // TRIK ANTI-GAGAL: Copy teks ke clipboard
+                            try {
+                                await navigator.clipboard.writeText(text);
+                            } catch(e) {
+                                const textArea = document.createElement("textarea");
+                                textArea.value = text;
+                                document.body.appendChild(textArea);
+                                textArea.select();
+                                try { document.execCommand('copy'); } catch(err) {}
+                                document.body.removeChild(textArea);
+                            }
+
+                            // Beritahu user untuk menempelkan (paste)
+                            Toast.fire({ icon: 'info', title: 'Teks detail telah di-copy! Silakan Paste di chat WA.', timer: 4000 });
+
+                            // Buka share bawaan OS
+                            setTimeout(async () => {
+                                await navigator.share({
+                                    files: [file],
+                                    title: item.nama,
+                                    text: text // Beberapa OS tetap mendukung ini sebagai caption
+                                });
+                            }, 500);
+                            
+                            return; 
+                        }
+                    }
+                } catch (error) {
+                    console.log('Native Share API dibatalkan/gagal: ', error);
+                    // Lanjut ke fallback di bawah jika share native gagal/dibatalkan
+                }
+            }
+
+            Swal.close();
+
+            // 2. OPSI KEDUA (FALLBACK): kirim teks saja. Foto Drive sengaja
+            // tetap privat; perangkat yang mendukung Web Share menerima foto
+            // sebagai lampiran melalui jalur Base64 di atas.
+
+            const encodedText = encodeURIComponent(text);
+            window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+        }
+
+        function extractDriveIdClient(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            const dMatch = raw.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (dMatch) return dMatch[1];
+            const idMatch = raw.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (idMatch) return idMatch[1];
+            return /^[a-zA-Z0-9_-]{10,}$/.test(raw) ? raw : '';
+        }
+
+        function loadCatalogImage(imgEl, source) {
+            if (!imgEl) return Promise.resolve(null);
+
+            const raw = String(source || '').trim();
+            if (raw.startsWith('data:image/')) {
+                setImageReady(imgEl, raw);
+                return Promise.resolve(raw);
+            }
+            if (/^https?:\/\//i.test(raw) && !/drive\.google\.com/i.test(raw)) {
+                setImageReady(imgEl, raw);
+                return Promise.resolve(raw);
+            }
+
+            const fileId = extractDriveIdClient(raw);
+            setImageLoading(imgEl);
+            if (!fileId) {
+                setImageEmpty(imgEl);
+                return Promise.resolve(null);
+            }
+
+            return fetchBase64Async(fileId).then(base64 => {
+                if (base64 && base64.startsWith('data:image/')) {
+                    setImageReady(imgEl, base64);
+                    return base64;
+                }
+                setImageError(imgEl);
+                return null;
+            });
+        }
+
+        // Foto diminta dari Apps Script agar file Drive tidak perlu dibuat publik.
+        function loadImagesFast(dataList) {
+            dataList.forEach(item => {
+                const imgEl = document.getElementById(`img-${item.id}`);
+                if (!imgEl) return;
+
+                if (item.cachedImageBase64) {
+                    setImageReady(imgEl, item.cachedImageBase64);
+                    return;
+                }
+
+                const firstFileId = imgEl.getAttribute('data-first-id');
+
+                if (firstFileId && firstFileId.length > 5) {
+                    loadCatalogImage(imgEl, firstFileId).then(base64 => {
+                        if (base64 && base64.startsWith('data:image/')) item.cachedImageBase64 = base64;
+                    });
+                } else {
+                    setImageEmpty(imgEl);
+                }
+            });
+        }
+
+        function openModal() {
+            const form = document.getElementById('itemForm');
+            const modal = document.getElementById('formModal');
+            
+            editingItemId = null; 
+            document.getElementById('modalTitle').innerText = 'Tambah Item Baru';
+            document.getElementById('btnSubmitText').innerText = 'Simpan Item';
+            document.getElementById('btnDelete').classList.add('hidden'); 
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); }, 10);
+            document.body.style.overflow = 'hidden';
+            form.reset();
+            clearImagePreview();
+        }
+
+        function editItem(id) {
+            const form = document.getElementById('itemForm');
+            const modal = document.getElementById('formModal');
+            const item = appData.find(i => String(i.id) === String(id));
+            if (!item) return;
+
+            editingItemId = item.id;
+            document.getElementById('f_nama').value = item.nama || '';
+            document.getElementById('f_kode').value = item.kode || '';
+            document.getElementById('f_kategori').value = item.kategori || '';
+            document.getElementById('f_panjang').value = item.panjang ? String(item.panjang).replace('.', ',') : '';
+            document.getElementById('f_lebar').value = item.lebar ? String(item.lebar).replace('.', ',') : '';
+            document.getElementById('f_tinggi').value = item.tinggi ? String(item.tinggi).replace('.', ',') : '';
+            document.getElementById('f_diameter').value = item.diameter ? String(item.diameter).replace('.', ',') : '';
+            document.getElementById('f_keterangan').value = item.keterangan || '';
+            
+            keepExistingImages = true; 
+            currentImagesBase64 = []; 
+            const container = document.getElementById('imagePreviewContainer');
+            container.querySelectorAll('.img-thumb').forEach(el => el.remove());
+
+            let fileIds = item.fileId ? item.fileId.toString().split(',') : [];
+            if (fileIds.length === 0 && item.gambarUrl) fileIds = [item.gambarUrl];
+
+            if (fileIds.length > 0 && fileIds[0] !== "") {
+                document.getElementById('uploadPlaceholder').classList.add('hidden');
+                document.getElementById('imageActions').classList.remove('hidden');
+                document.getElementById('imageCount').innerText = `${fileIds.length} / 5 Foto (Tersimpan)`;
+
+                fileIds.forEach(fId => {
+                    const thumb = document.createElement('img');
+                    thumb.className = 'img-thumb w-14 h-14 md:w-16 md:h-16 object-cover rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm z-20 shrink-0';
+                    setImageLoading(thumb);
+                    container.appendChild(thumb);
+                    loadCatalogImage(thumb, fId);
+                });
+            } else {
+                clearImagePreview();
+            }
+
+            document.getElementById('modalTitle').innerText = 'Edit Item';
+            document.getElementById('btnSubmitText').innerText = 'Update Item';
+            document.getElementById('btnDelete').classList.remove('hidden'); 
+
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('formModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => { 
+                modal.classList.add('hidden'); 
+                if(document.getElementById('detailModal').classList.contains('hidden') && document.getElementById('lightboxModal').classList.contains('hidden')) {
+                    document.body.style.overflow = 'auto';
+                }
+            }, 300);
+        }
+
+        function previewAndCompressImages(event) {
+            const files = Array.from(event.target.files);
+            if (!files.length) return;
+
+            if (keepExistingImages) {
+                keepExistingImages = false;
+                currentImagesBase64 = [];
+                const container = document.getElementById('imagePreviewContainer');
+                container.querySelectorAll('.img-thumb').forEach(el => el.remove());
+            }
+
+            if (currentImagesBase64.length + files.length > 5) {
+                Toast.fire({ icon: 'warning', title: 'Total maksimal hanya 5 foto!' });
+                const availableSlots = 5 - currentImagesBase64.length;
+                files.splice(availableSlots); 
+            }
+
+            if (files.length === 0) return;
+
+            document.getElementById('uploadPlaceholder').classList.add('hidden');
+            document.getElementById('imageActions').classList.remove('hidden');
+            const container = document.getElementById('imagePreviewContainer');
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        } else {
+                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                        }
+
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        currentImagesBase64.push(compressedBase64);
+                        
+                        const thumb = document.createElement('img');
+                        thumb.src = compressedBase64;
+                        thumb.className = 'img-thumb w-14 h-14 md:w-16 md:h-16 object-cover rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm z-20 shrink-0';
+                        container.appendChild(thumb);
+
+                        document.getElementById('imageCount').innerText = `${currentImagesBase64.length} / 5 Foto`;
+                    };
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            });
+            event.target.value = '';
+        }
+
+        function clearImagePreview() {
+            keepExistingImages = false;
+            currentImagesBase64 = [];
+            document.getElementById('f_gambar').value = '';
+            document.getElementById('uploadPlaceholder').classList.remove('hidden');
+            document.getElementById('imageActions').classList.add('hidden');
+            const container = document.getElementById('imagePreviewContainer');
+            container.querySelectorAll('.img-thumb').forEach(el => el.remove());
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            const payload = {
+                id: editingItemId, 
+                nama: document.getElementById('f_nama').value,
+                kode: document.getElementById('f_kode').value,
+                kategori: document.getElementById('f_kategori').value,
+                panjang: document.getElementById('f_panjang').value.replace(/\./g, ','),
+                lebar: document.getElementById('f_lebar').value.replace(/\./g, ','),
+                tinggi: document.getElementById('f_tinggi').value.replace(/\./g, ','),
+                diameter: document.getElementById('f_diameter').value.replace(/\./g, ','),
+                keterangan: document.getElementById('f_keterangan').value,
+                keepExistingImages: keepExistingImages,
+                gambarBase64Array: currentImagesBase64 
+            };
+
+            if(!payload.id && (!payload.gambarBase64Array || payload.gambarBase64Array.length === 0)) {
+                return Toast.fire({ icon: 'warning', title: 'Mohon sertakan minimal 1 foto/gambar item.' });
+            }
+
+            const btnText = document.getElementById('btnSubmitText');
+            const btnLoading = document.getElementById('btnSubmitLoading');
+            btnText.innerText = payload.id ? 'Mengupdate...' : 'Menyimpan...';
+            btnLoading.classList.remove('hidden');
+            document.getElementById('btnSubmit').disabled = true;
+
+            if (typeof google !== 'undefined') {
+                google.script.run
+                    .withSuccessHandler(function(response) {
+                        resetBtn();
+                        if(response.success) {
+                            closeModal();
+                            Toast.fire({ icon: 'success', title: response.message });
+                            loadData(); 
+                        } else {
+                            if(response.message.includes('PIN salah')) activePin = ''; 
+                            GlassAlert.fire('Error', response.message, 'error');
+                        }
+                    })
+                    .withFailureHandler(function(err) {
+                        resetBtn();
+                        GlassAlert.fire('Error', 'Koneksi ke server gagal. ' + err, 'error');
+                    })
+                    .saveItem(payload, activePin); 
+            } else {
+                setTimeout(() => { resetBtn(); closeModal(); Toast.fire({ icon: 'success', title: 'Berhasil (Mode Mock)' }); }, 1000);
+            }
+
+            function resetBtn() {
+                btnText.innerText = editingItemId ? 'Update Item' : 'Simpan Item';
+                btnLoading.classList.add('hidden');
+                document.getElementById('btnSubmit').disabled = false;
+            }
+        }
+
+        function deleteItemAction() {
+            if (!editingItemId) return;
+
+            Swal.fire({
+                title: 'Hapus Item?',
+                text: "Item dan seluruh Foto terkait akan dipindah ke Trash Drive. Anda yakin?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#cbd5e1',
+                confirmButtonText: '<i class="fa-solid fa-trash mr-2"></i> Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                customClass: { popup: 'glass-swal', cancelButton: 'text-slate-700 font-bold' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const btnDelete = document.getElementById('btnDelete');
+                    btnDelete.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+                    btnDelete.disabled = true;
+                    document.getElementById('btnSubmit').disabled = true;
+
+                    if (typeof google !== 'undefined') {
+                        google.script.run
+                            .withSuccessHandler(function(response) {
+                                if(response.success) {
+                                    closeModal();
+                                    Toast.fire({ icon: 'success', title: response.message });
+                                    loadData(); 
+                                } else {
+                                    btnDelete.innerHTML = '<i class="fa-solid fa-trash mr-1"></i> Hapus';
+                                    btnDelete.disabled = false;
+                                    document.getElementById('btnSubmit').disabled = false;
+                                    if(response.message.includes('PIN salah')) activePin = '';
+                                    GlassAlert.fire('Error', response.message, 'error');
+                                }
+                            })
+                            .withFailureHandler(function(err) {
+                                btnDelete.innerHTML = '<i class="fa-solid fa-trash mr-1"></i> Hapus';
+                                btnDelete.disabled = false;
+                                document.getElementById('btnSubmit').disabled = false;
+                                GlassAlert.fire('Error', 'Koneksi gagal. ' + err, 'error');
+                            })
+                            .deleteItem(editingItemId, activePin); 
+                    } else {
+                        appData = appData.filter(i => i.id !== editingItemId);
+                        renderCatalog(true); closeModal();
+                        Toast.fire({ icon: 'success', title: 'Dihapus (Mode Mock)' });
+                    }
+                }
+            });
+        }
+
+        // --- Export Functions ---
+        function exportToExcel() {
+            // Gunakan currentFilteredData agar yang di-export sesuai dengan apa yang dilihat user
+            const dataToExport = currentFilteredData.length > 0 ? currentFilteredData : appData;
+            
+            if(dataToExport.length === 0) return Toast.fire({ icon: 'warning', title: 'Tidak ada data' });
+            
+            const wsData = dataToExport.map(item => ({
+                'Kode Item': item.kode, 'Nama Item': item.nama, 'Kategori': item.kategori,
+                'Panjang (cm)': formatDimForDisplay(item.panjang), 'Lebar (cm)': formatDimForDisplay(item.lebar), 
+                'Tinggi (cm)': formatDimForDisplay(item.tinggi), 'Diameter (cm)': formatDimForDisplay(item.diameter),
+                'Keterangan': item.keterangan
+            }));
+            const ws = XLSX.utils.json_to_sheet(wsData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Katalog");
+            XLSX.writeFile(wb, "Katalog_Inventaris.xlsx");
+        }
+
+        // Helper fungsi Async untuk mendapatkan Base64 on-demand dari Server
+        function fetchBase64Async(fileId) {
+            return new Promise((resolve) => {
+                if(!fileId || typeof google === 'undefined') return resolve(null);
+                google.script.run
+                    .withSuccessHandler(res => resolve(res))
+                    .withFailureHandler(() => resolve(null))
+                    .getImageBase64(fileId);
+            });
+        }
+
+        // --- SOLUSI STUCK & ERROR: Fungsi Kompresi Client-Side Sebelum Masuk PDF ---
+        function downscaleImageForPDF(base64Str) {
+            return new Promise((resolve) => {
+                if (!base64Str || !base64Str.startsWith('data:image')) return resolve(null);
+                
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600; // Ditingkatkan untuk kualitas cetak (print-quality)
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height = Math.round(height * (MAX_WIDTH / width));
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Isi dengan background putih agar gambar transparan (PNG) tidak menjadi hitam saat dikonversi ke JPEG
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Selalu return format JPEG (Lebih stabil dan ringan untuk jsPDF)
+                    resolve(canvas.toDataURL('image/jpeg', 0.85)); // Kualitas ditingkatkan menjadi 85%
+                };
+                img.onerror = () => resolve(null); 
+                img.src = base64Str;
+            });
+        }
+
+        function exportToPDF() {
+            const dataToExport = currentFilteredData.length > 0 ? currentFilteredData : appData;
+            if(dataToExport.length === 0) return Toast.fire({ icon: 'warning', title: 'Tidak ada data' });
+
+            Swal.fire({
+                title: 'Pilih Format PDF',
+                text: 'PDF dengan foto membutuhkan waktu lebih lama untuk mengunduh gambar dari server.',
+                icon: 'question',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa-solid fa-image mr-2"></i>Dengan Foto',
+                denyButtonText: '<i class="fa-solid fa-list mr-2"></i>Teks Saja (Cepat)',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#f59e0b', // Amber 500
+                denyButtonColor: '#0ea5e9', // Sky 500
+                customClass: { popup: 'glass-swal' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    executePDFExport(dataToExport, true); // Ekspor dengan foto
+                } else if (result.isDenied) {
+                    executePDFExport(dataToExport, false); // Ekspor teks saja
+                }
+            });
+        }
+
+        async function executePDFExport(dataToExport, includeImages) {
+            if (includeImages) {
+                let loadedCount = 0;
+                Swal.fire({
+                    title: 'Mengunduh Foto',
+                    html: `Memproses 0 dari ${dataToExport.length} item...`,
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                // FETCH PARALEL (Batch of 3) & DOWN-SCALE LANSUNG
+                // Memecah menjadi antrean isi 3 untuk menyeimbangkan kecepatan dan stabilitas
+                const chunkSize = 3;
+                for (let i = 0; i < dataToExport.length; i += chunkSize) {
+                    const chunk = dataToExport.slice(i, i + chunkSize);
+                    await Promise.all(chunk.map(async (item) => {
+                        if (!item.cachedImageBase64) {
+                            let fileIdStr = item.fileId ? item.fileId.toString().split(',')[0] : '';
+                            if(!fileIdStr && item.gambarUrl) fileIdStr = item.gambarUrl;
+                            
+                            let fileId = fileIdStr;
+                            if (fileId.includes('id=')) fileId = fileId.split('id=')[1];
+                            else if (fileId.includes('/d/')) fileId = fileId.match(/\/d\/([a-zA-Z0-9_-]+)/)[1];
+
+                            if (fileId) {
+                                try {
+                                    // 1. Download dari Server
+                                    let rawBase64 = await fetchBase64Async(fileId);
+                                    // 2. Langsung kompres dan simpan ke memori lokal
+                                    if(rawBase64) {
+                                        item.cachedImageBase64 = await downscaleImageForPDF(rawBase64);
+                                    }
+                                } catch(e) {
+                                    console.error("Gagal download: ", fileId);
+                                }
+                            }
+                        }
+                        loadedCount++;
+                    }));
+                    
+                    // Jeda sejenak agar Pop-up UI bisa terupdate tanpa lag
+                    await new Promise(r => setTimeout(r, 50));
+                    Swal.update({ html: `Memproses ${Math.min(loadedCount, dataToExport.length)} dari ${dataToExport.length} item...` });
+                }
+
+                Swal.fire({
+                    title: 'Menyusun PDF',
+                    html: 'Semua foto berhasil diunduh dan dikompresi.<br>Sedang merender dokumen PDF...',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+                
+                // Jeda 800ms sangat penting agar browser tidak freeze
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+            } else {
+                Swal.fire({
+                    title: 'Menyiapkan PDF',
+                    html: 'Menyusun data teks...',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4'); 
+                
+                // --- HEADER PDF PREMIUM ---
+                doc.setFillColor(245, 158, 11); 
+                doc.rect(0, 0, 210, 6, 'F');
+                doc.setFont("helvetica", "bold"); 
+                doc.setFontSize(22); 
+                doc.setTextColor(30, 41, 59); 
+                doc.text("Katalog Inventaris", 14, 22);
+                doc.setTextColor(245, 158, 11); 
+                doc.text("Bakerzin", doc.getTextWidth("Katalog Inventaris ") + 14, 22);
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10); 
+                doc.setTextColor(100, 100, 100);
+                const dateStr = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute:'2-digit'});
+                doc.text(`Dicetak pada: ${dateStr}`, 14, 30);
+                
+                doc.setDrawColor(226, 232, 240); 
+                doc.setLineWidth(0.5);
+                doc.line(14, 34, 196, 34);
+
+                // --- STRUKTUR DATA AMAN (Anti Undefined) ---
+                // Format selalu berupa string kosong untuk kolom gambar (index 0)
+                const tableRows = dataToExport.map(item => {
+                    let dimStr = `P: ${formatDimForDisplay(item.panjang)||'-'}   |   L: ${formatDimForDisplay(item.lebar)||'-'}   |   T: ${formatDimForDisplay(item.tinggi)||'-'}   |   Ø: ${formatDimForDisplay(item.diameter)||'-'}`;
+                    let safeNama = item.nama ? String(item.nama).toUpperCase() : 'TANPA NAMA';
+                    let infoStr = `NAMA ITEM:\n${safeNama}\n\nKODE: ${item.kode||'-'}     |     KATEGORI: ${item.kategori||'-'}\nDIMENSI (cm): ${dimStr}`;
+                    
+                    return includeImages ? ['', infoStr, String(item.keterangan || '-')] : [infoStr, String(item.keterangan || '-')];
+                });
+
+                const headLayout = includeImages 
+                    ? [["FOTO ITEM", "SPESIFIKASI", "CATATAN / KETERANGAN"]] 
+                    : [["SPESIFIKASI", "CATATAN / KETERANGAN"]];
+                
+                const colLayout = includeImages
+                    ? { 0: { cellWidth: 35, halign: 'center' }, 1: { cellWidth: 85 }, 2: { cellWidth: 'auto' } }
+                    : { 0: { cellWidth: 100 }, 1: { cellWidth: 'auto' } };
+
+                // --- RENDER TABEL ---
+                doc.autoTable({
+                    startY: 40, 
+                    head: headLayout, 
+                    body: tableRows,
+                    theme: 'grid', 
+                    styles: { 
+                        font: 'helvetica', fontSize: 9, cellPadding: 5, valign: 'middle',
+                        lineColor: [226, 232, 240], lineWidth: 0.1
+                    },
+                    headStyles: { 
+                        fillColor: [248, 250, 252], textColor: [15, 23, 42], fontStyle: 'bold',
+                        lineColor: [203, 213, 225], lineWidth: 0.2
+                    },
+                    alternateRowStyles: { fillColor: [250, 250, 250] },
+                    columnStyles: colLayout,
+                    didDrawCell: function(data) {
+                        // Logika Render Gambar Teraman
+                        if (includeImages && data.column.index === 0 && data.cell.section === 'body') {
+                            
+                            // Ambil dari variabel luar 'dataToExport' berdasarkan index baris, BUKAN dari data.cell
+                            const item = dataToExport[data.row.index];
+                            
+                            if (item && item.cachedImageBase64) {
+                                try { 
+                                    const imgSize = 25; 
+                                    const marginX = data.cell.x + (data.cell.width / 2) - (imgSize / 2);
+                                    const marginY = data.cell.y + 5;
+                                    
+                                    // Karena di fungsi downscaleImageForPDF kita paksa jadi JPEG, maka format disini pasti 'JPEG'. 
+                                    // Alias 'FAST' sangat membantu meringankan render dokumen panjang
+                                    doc.addImage(item.cachedImageBase64, 'JPEG', marginX, marginY, imgSize, imgSize, undefined, 'FAST'); 
+                                } catch(e) {
+                                    doc.setFontSize(8); doc.setTextColor(239, 68, 68);
+                                    doc.text("Gagal Render", data.cell.x + data.cell.width/2, data.cell.y + data.cell.height/2, {align: 'center'});
+                                }
+                            } else {
+                                doc.setFontSize(8); doc.setTextColor(150, 150, 150);
+                                doc.text("Tidak Ada Foto", data.cell.x + data.cell.width/2, data.cell.y + data.cell.height/2, {align: 'center'});
+                            }
+                        }
+                    },
+                    willDrawCell: function(data) {
+                        if (includeImages && data.row.section === 'body' && data.column.index === 0) {
+                            if (data.row.minHeight < 35) {
+                                data.row.minHeight = 35; 
+                            }
+                        }
+                    },
+                    didDrawPage: function (data) {
+                        let str = "Halaman " + doc.internal.getNumberOfPages();
+                        doc.setFontSize(8); doc.setTextColor(150);
+                        doc.text(str, 196, 285, {align: 'right'});
+                        doc.text("Katalog Inventaris Bakerzin", 14, 285);
+                    }
+                });
+                
+                Swal.close(); 
+                let nameSuffix = includeImages ? "Dengan_Foto" : "Teks";
+                doc.save(`Katalog_Bakerzin_${nameSuffix}_${new Date().getTime()}.pdf`);
+                Toast.fire({ icon: 'success', title: 'PDF Berhasil diunduh' });
+            } catch (error) {
+                console.error("PDF Export Error: ", error);
+                Swal.fire({
+                    title: 'Render Gagal',
+                    html: `Terjadi kesalahan saat menyusun PDF.<br><br><span class="text-xs text-red-500 font-mono bg-red-50 p-2 rounded block text-left overflow-auto custom-scrollbar max-h-32">Error: ${error.message || error}</span>`,
+                    icon: 'error',
+                    customClass: { popup: 'glass-swal' }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
